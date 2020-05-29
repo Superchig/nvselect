@@ -3,9 +3,19 @@
 #include <thread>
 #include <unistd.h>
 #include <curses.h>
+#include "util.h"
 
 int main()
 {
+    auto options = readConfig();
+
+    // for (auto pair : options)
+    // {
+    //     std::cout << pair.first << ": " << pair.second << '\n';
+    // }
+
+    // return 0;
+
     setlocale(LC_ALL, "");
 
     initscr();
@@ -15,9 +25,14 @@ int main()
 
     curs_set(0);
 
-    std::vector<std::string> choices{"NVIDIA", "Intel", "None (go to tty)"};
+    // std::vector<std::string> choice_displays{"NVIDIA", "Intel", "None (go to tty)"};
+    std::vector<std::string> choice_displays;
+    for (auto pair : options)
+    {
+        choice_displays.push_back(pair.first);
+    }
 
-    const auto wait_time = std::chrono::milliseconds(1);
+    const auto waitTime = std::chrono::milliseconds(1);
 
     timeout(0);
     int selection = 0;
@@ -26,10 +41,10 @@ int main()
     bool countTimeDown = true;
     while (true)
     {
-        for (int i = 0; i < (int) choices.size(); i++)
+        for (int i = 0; i < (int) choice_displays.size(); i++)
         {
             if (i == selection) { attron(A_REVERSE); }
-            mvprintw(i, 0, choices.at(i).c_str());
+            mvprintw(i, 0, choice_displays.at(i).c_str());
             if (i == selection) { attroff(A_REVERSE); }
         }
 
@@ -37,16 +52,16 @@ int main()
         {
             const int secCount = (msCount / 1000) + 1;
             std::string remaining = "Seconds remaining: " + std::to_string(secCount);
-            move(choices.size(), 0);
+            move(choice_displays.size(), 0);
             clrtoeol();
-            mvprintw(choices.size(), 0, remaining.c_str());
+            mvprintw(choice_displays.size(), 0, remaining.c_str());
         }
 
         ch = getch();
 
         if (ch == ERR)
         {
-            std::this_thread::sleep_for(wait_time);
+            std::this_thread::sleep_for(waitTime);
 
             if (msCount > 0)
             {
@@ -64,7 +79,7 @@ int main()
         // If we've reached here, then at least one key has been pressed, so we
         // don't want to count time down any more
         countTimeDown = false;
-        move(choices.size(), 0);
+        move(choice_displays.size(), 0);
         clrtoeol();
 
         if (ch == '\n')
@@ -75,7 +90,7 @@ int main()
         {
             selection--;
         }
-        else if ((ch == KEY_DOWN || ch == 'j') && selection < (int) choices.size() - 1)
+        else if ((ch == KEY_DOWN || ch == 'j') && selection < (int) choice_displays.size() - 1)
         {
             selection++;
         }
@@ -83,14 +98,10 @@ int main()
 
     endwin();
 
-    std::string choice = choices.at(selection);
-    if (choice == "NVIDIA")
+    std::string script = options.at(selection).second;
+    if (!script.empty())
     {
-        execl("/usr/bin/nvidia-xrun", "/usr/bin/nvidia-xrun", nullptr);
-    }
-    else if (choice == "Intel")
-    {
-        execl("/home/chiggie/dotfiles/msi_gs65/startx-wrapper", "/home/chiggie/dotfiles/msi_gs65/startx-wrapper", nullptr);
+        execl(script.c_str(), script.c_str(), nullptr);
     }
 
     return 0;

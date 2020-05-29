@@ -1,0 +1,14 @@
+[[choices]]
+display = "NVIDIA"
+script = "/usr/bin/nvidia-xrun"
+
+[[choices]]
+display = "Intel"
+script = "/home/chiggie/dotfiles/msi_gs65/startx-wrapper"
+
+[[choices]]
+display = "Third"
+script = "/usr/bin/nvidia-xrun"
+
+[[choices]]
+display = "None (go to tty)"
